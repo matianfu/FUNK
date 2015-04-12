@@ -26,9 +26,39 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>inc</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>src</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>inc/Adder.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/inc/Adder.h</locationURI>
+		</link>
+		<link>
+			<name>inc/Sum.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/inc/Sum.h</locationURI>
+		</link>
+		<link>
+			<name>inc/co.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/inc/co.h</locationURI>
+		</link>
+		<link>
+			<name>inc/common.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/inc/common.h</locationURI>
+		</link>
+		<link>
+			<name>src/continue.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/src/continue.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/main.cpp</name>
