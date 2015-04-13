@@ -50,7 +50,7 @@ public:
    */
   enum State
   {
-    RESET = 0, RUNNING, DEAD,
+    RESET = 0, RUNNING,
   };
 
   void* EP;
@@ -75,7 +75,7 @@ public:
    */
   Co* Exit()
   {
-    state = DEAD;
+    state = RESET;
     return this;
   }
 };

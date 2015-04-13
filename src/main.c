@@ -7,7 +7,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <time.h>
+
+#define CONCAT01(a, b)        a##b
+#define CONCAT02(a, b)        CONCAT01(a, b)
 
 struct continuation;
 
@@ -71,14 +76,99 @@ struct continuation* func_a(int a, int b, int * ret)
   return init_funk(&f->c, func_a_run);
 }
 
+
+
+#define EXIT          if (this->co.malloc)                    \
+                      {                                       \
+                        free(this);                           \
+                      }                                       \
+                      else                                    \
+                      {                                       \
+                        this->co.ep = 0;                      \
+                      }                                       \
+                      return 0
+
+#define YIELD         do { return (CO*)this; } while (0)
+
+#define CALL_FUNK(c, name,...)  CONCAT02(ENTRY, __LINE__):    \
+                if ((this->c = name(this->c, __VA_ARGS__)))   \
+                {                                             \
+                  this->co.ep = && CONCAT02(ENTRY, __LINE__); \
+                  return (CO*)this;                           \
+                }
+
+#define HEAD_BEGIN(type)  type * this = (type *)co;           \
+                          if (this == 0)                      \
+                          {                                   \
+                            this = malloc(sizeof(type));      \
+                            if (this == 0)                    \
+                            {
+
+#define HEAD_END              /* process mem error */         \
+                              return 0;                       \
+                            }                                 \
+                            memset(this, 0, sizeof(*this));   \
+                            this->co.malloc = 1;              \
+                          }                                   \
+                          if (this->co.ep) goto *this->co.ep; \
+
+typedef struct {
+  void* ep;
+  int malloc;
+} CO;
+
+typedef struct {
+  CO co;
+  struct timespec start;
+  struct timespec now;
+} add_data ;
+
+CO* add(CO* co, int a, int b, int * ret)
+{
+  HEAD_BEGIN(add_data)
+  // put mem error code here
+  HEAD_END
+
+  clock_gettime(CLOCK_REALTIME_COARSE, &this->start);
+  this->co.ep = && INITED;
+
+  INITED:
+  clock_gettime(CLOCK_REALTIME, &this->now);
+
+  if ((this->now.tv_sec - this->start.tv_sec) > 1)
+  {
+    *ret = a + b;
+    EXIT;
+  }
+  YIELD;
+}
+
+typedef struct {
+  CO co;
+  CO* sub;
+  int sum;
+} sum_data;
+
+CO * sum(CO * co, int a, int b, int c, int * ret)
+{
+  HEAD_BEGIN(sum_data)
+  // put mem error code here
+  HEAD_END
+
+  CALL_FUNK(sub, add, a, b, &this->sum);
+  CALL_FUNK(sub, add, this->sum, c, ret);
+
+  EXIT;
+}
+
 entry_t* func_c(entry_t* ep, int a, int b, int * ret)
 {
   typedef struct {
     struct timespec start;
+    struct timespec now;
   } data_t;
 
   data_t * f;
-  struct timespec now;
 
   if (ep->entry == 0)
   {
@@ -93,11 +183,12 @@ entry_t* func_c(entry_t* ep, int a, int b, int * ret)
     clock_gettime(CLOCK_REALTIME_COARSE, &f->start);
     return NULL;
   }
+
 RUNNING:
   f = (data_t *)ep->data;
-  clock_gettime(CLOCK_REALTIME, &now);
+  clock_gettime(CLOCK_REALTIME, &f->now);
 
-  if ((now.tv_sec - f->start.tv_sec) > 1)
+  if ((f->now.tv_sec - f->start.tv_sec) > 1)
   {
     *ret = a + b;
     free(f);
@@ -107,6 +198,8 @@ RUNNING:
   }
   return NULL;
 }
+
+
 
 entry_t* func_d(entry_t * ep, int a, int b, int c, int * ret)
 {
@@ -171,8 +264,7 @@ struct func_b
   int* m_ret;
 };
 
-#define CONCAT01(a, b)        a##b
-#define CONCAT02(a, b)        CONCAT01(a, b)
+
 #define ENTRY(c)              if (c->entry) goto *c->entry;
 #define FUNK(sub, exp)        CONCAT02(ENTRY, __LINE__):                      \
                               do {                                            \
@@ -242,27 +334,42 @@ struct continuation* func_b(int a, int b, int c, int * ret)
   return &f->c;
 }
 
+add_data add_d;
+sum_data sum_d =
+{
+  .sub = (CO*)&add_d,
+};
+
 int main(void)
 {
   int ret;
 
   setbuf(stdout, NULL);
 
-  entry_t ent = {0, 0};
+//  entry_t ent = {0, 0};
+//  while (func_c(&ent, 1, 2, &ret) == 0);
+//
+//  printf("func_c returns %d\n", ret);
+//
+//  ent.data = 0;
+//  ent.entry = 0;
+//
+//  while (func_d(&ent, 1, 2, 3, &ret) == 0);
+//
+//  printf("func_d returns %d\n", ret);
 
-  while (func_c(&ent, 1, 2, &ret) == 0);
+  CO* co = 0;
+  while ((co = sum(co, 1, 2, 4, &ret)));
 
-  printf("func_c returns %d\n", ret);
+  printf("sum 1, 2, 4 is %d\n", ret);
 
-  ent.data = 0;
-  ent.entry = 0;
+  while ((co = sum((CO*)&sum_d, 1, 3, 5, &ret)))
+  {
+    sleep(1);
+    printf("wake up\n");
+  }
 
-  while (func_d(&ent, 1, 2, 3, &ret) == 0);
-
-  printf("func_d returns %d\n", ret);
-
-
-
+  printf("sum 1, 3, 5 is %d\n", ret);
 //  struct continuation * c = func_b(1, 2, 3, &ret);
 //  if (c)
 //  {
@@ -271,4 +378,7 @@ int main(void)
 //
 //  printf("1 + 2 + 3 = %d\n", ret);
 //  return 0;
+
+  while (1);
+  return 0;
 }
