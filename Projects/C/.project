@@ -30,6 +30,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>src/funk.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/src/funk.h</locationURI>
+		</link>
+		<link>
 			<name>src/main.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/src/main.c</locationURI>

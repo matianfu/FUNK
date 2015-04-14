@@ -42,22 +42,11 @@ class Co
 {
 public:
 
-  /**
-   * RESET:   not initialized
-   * RUNNING: can be called
-   * DEAD:    finished, either initialization fail, or function returned,
-   *          success or failed.
-   */
-  enum State
-  {
-    RESET = 0, RUNNING,
-  };
-
   void* EP;
-  State state;
+  int malloc;
 
   Co() :
-      EP(0), state(RESET)
+      EP(0), malloc(0) // , state(RESET)
   {
   }
 
@@ -66,8 +55,7 @@ public:
    */
   Co* Yield()
   {
-    state = RUNNING;
-    return 0;
+    return this;
   }
 
   /**
@@ -75,8 +63,8 @@ public:
    */
   Co* Exit()
   {
-    state = RESET;
-    return this;
+    EP = 0;
+    return 0;
   }
 };
 

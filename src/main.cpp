@@ -21,8 +21,11 @@ void task1()
 
   cout << "Task1 : " << flush;
 
+  Adder add;
   Sum sum;
-  while (0 == sum.Do(1, 2, 3, &ret));
+  sum.co = &add;
+
+  while (sum.Do(1, 2, 3, &ret));
 
   cout << "1 + 2 + 3 = " << ret << endl;
 

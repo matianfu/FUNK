@@ -1,28 +1,65 @@
 #include "co.h"
 #include "Adder.h"
 
+#define DDCall(co, name, ...)   CONCAT02(ENTRY, __LINE__) :                 \
+                                do                                          \
+                                {                                           \
+                                  if (co)                                   \
+                                  {                                         \
+                                    if (((name*)co)->Do(__VA_ARGS__))       \
+                                    {                                       \
+                                      EP =                                  \
+                                      && CONCAT02(ENTRY, __LINE__);         \
+                                      return this;                          \
+                                    }                                       \
+                                    else                                    \
+                                    {                                       \
+                                      delete co;                            \
+                                      co = 0;                               \
+                                    }                                       \
+                                  }                                         \
+                                  else                                      \
+                                  {                                         \
+                                    co = (new name());                      \
+                                    if (co)                                 \
+                                    {                                       \
+                                      goto CONCAT02(ENTRY, __LINE__);       \
+                                    }                                       \
+                                  }                                         \
+                                } while (0)
+
+
+
 /*
  * Sum three numbers, call adder twice
  */
 class Sum: public Co
 {
-  Co* co;
+public:
+
+  Adder* adder;
   int sum;
 
-public:
   Co* Do(int a, int b, int c, int * ret)
   {
-    if (state == RESET)
-    {
-      co = 0;
-      sum = 0;
-      return Yield();
-    }
-
     if (EP) goto *EP;
 
-    DoCall(co, Adder, a, b, &sum);
-    DoCall(co, Adder, sum, c, ret);
+    sum = 0;
+
+
+    ENTRY1:
+    if (adder->Do(a, b, &sum))
+    {
+      EP = && ENTRY1;
+      return this;
+    }
+
+    ENTRY2:
+    if (((Adder*)co)->Do(sum, c, ret))
+    {
+      EP = && ENTRY2;
+      return this;
+    }
 
     return Exit();
   }

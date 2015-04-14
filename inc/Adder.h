@@ -10,29 +10,43 @@
  */
 class Adder: public Co
 {
-
   struct timespec start;
   struct timespec now;
 
 public:
 
-  Co* Do(int a, int b, int *ret)
+static Co* Do(Co * co, int a, int b, int *ret)
   {
-    if (state == RESET)
+    Adder * i = (Adder *)co;
+    if (i == NULL)
     {
-      clock_gettime(CLOCK_REALTIME_COARSE, &start);
-      return Yield();
+      i = new Adder();
+      if (i == NULL)
+      {
+        // set error code here
+        return 0;
+      }
+      i->malloc = 1;
     }
 
-    clock_gettime(CLOCK_REALTIME_COARSE, &now);
+    if (i->EP) goto *i->EP;
 
-    if ((now.tv_sec - start.tv_sec) > 1)
+    clock_gettime(CLOCK_REALTIME_COARSE, &i->start);
+    //  return Yield();
+    i->EP = && INITED;
+
+    INITED:
+
+    clock_gettime(CLOCK_REALTIME_COARSE, &i->now);
+
+    if ((i->now.tv_sec - i->start.tv_sec) > 1)
     {
-      *ret = a+b;
-      return Exit();
+      *ret = a + b;
+      i->EP = 0;
+      return 0;
     }
 
-    return Yield();
+    return i;
   }
 };
 
