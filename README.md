@@ -1,8 +1,8 @@
 # FUNK
 
-A C continuation implementation inspired by Adam Dunkel's Proto Thread.
+A C continuation implementation inspired by Adam Dunkel's ProtoThread.
 
-Onl 5 C macros and 1 struct definition; less than 50 lines of code.
+Only 5 C macros and 1 struct definition; less than 50 lines of code.
 
 Simple yet POWERFUL.
 
