@@ -28,9 +28,8 @@
     }                                   \
   } while (0)
 
-#define CALL_FUNK(name,...)             \
-    (this->co.sub =                     \
-    name(this->co.sub, __VA_ARGS__))    \
+#define CALL_FUNK(co, name,...)         \
+    (co = name(co, __VA_ARGS__))        \
 
 #define VAR_BEGIN                       \
   struct _func_data {                   \
@@ -44,7 +43,7 @@
 
 typedef struct Continuation {
   void* ep;                   /** entry point **/
-  struct Continuation* sub;   /** sub func **/
+
 } Continuation;
 
 #endif

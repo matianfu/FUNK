@@ -41,17 +41,19 @@ Continuation * sum(Continuation * co,
 {
   VAR_BEGIN
   int sum;
+  Continuation* sub;
   VAR_END
 
   if (!this) { *ret = -1; EXIT(); }
+  this->sub = 0;
 
-  while(CALL_FUNK(add, a, b, &this->sum)) YIELD();
+  while(CALL_FUNK(this->sub, add, a, b, &this->sum)) YIELD();
   if (this->sum == -1) { // mem fail
     *ret = -1;
     EXIT();
   }
 
-  while(CALL_FUNK(add, this->sum, c, ret)) YIELD();
+  while(CALL_FUNK(this->sub, add, this->sum, c, ret)) YIELD();
   EXIT();
 }
 
