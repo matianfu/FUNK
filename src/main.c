@@ -18,9 +18,9 @@ Continuation* add(Continuation* co,
   struct timespec start;
   VAR_END
 
-  if (!this) { *ret = 1; EXIT(); }
+  if (!this) { *ret = -1; EXIT(); }
 
-  clock_gettime(CLOCK_REALTIME_COARSE, &this->start);
+  clock_gettime(CLOCK_REALTIME, &this->start);
 
   while(1)
   {
