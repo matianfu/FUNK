@@ -1,49 +1,58 @@
 /*
- * main.c
- *
  *  Created on: Apr 10, 2015
  *      Author: ma (matianfu@gmail.com)
+ *      Apache License
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 #include "funk.h"
 
-Continuation* add(Continuation* co, int a, int b, int * ret)
+Continuation* add(Continuation* co,
+    int a, int b, int * ret)
 {
+  struct timespec now;
   VAR_BEGIN
   struct timespec start;
-  struct timespec now;
   VAR_END
 
-  if (!this) { *ret = 1; EXIT; }
+  if (!this) { *ret = 1; EXIT(); }
+
   clock_gettime(CLOCK_REALTIME_COARSE, &this->start);
 
-  INIT_END
+  while(1)
+  {
+    clock_gettime(CLOCK_REALTIME, &now);
+    if ((now.tv_sec - this->start.tv_sec) > 1)
+    {
+      break;
+    }
+    YIELD();
+  }
 
-  clock_gettime(CLOCK_REALTIME, &this->now);
-  if ((this->now.tv_sec - this->start.tv_sec) > 1) {
-    *ret = a + b;
-    EXIT;   }
-
-  YIELD;
+  *ret = a + b;
+  EXIT();
 }
 
-Continuation * sum(Continuation * co, int a, int b, int c, int * ret)
+Continuation * sum(Continuation * co,
+    int a, int b, int c, int * ret)
 {
   VAR_BEGIN
   int sum;
   VAR_END
 
-  if (!this) { *ret = -1; EXIT; }
+  if (!this) { *ret = -1; EXIT(); }
 
-  INIT_END
+  while(CALL_FUNK(add, a, b, &this->sum)) YIELD();
+  if (this->sum == -1) { // mem fail
+    *ret = -1;
+    EXIT();
+  }
 
-  CALL_FUNK(add, a, b, &this->sum);
-  CALL_FUNK(add, this->sum, c, ret);
-
-  EXIT;
+  while(CALL_FUNK(add, this->sum, c, ret)) YIELD();
+  EXIT();
 }
 
 int main(void)

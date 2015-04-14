@@ -6,165 +6,46 @@
 #define CONCAT01(a, b)        a##b
 #define CONCAT02(a, b)        CONCAT01(a, b)
 
-#define EXIT                            \
+#define EXIT()                          \
   do {                                  \
-    if (this)                           \
-    {                                   \
-      free(this);                       \
-    }                                   \
+    if (this) free(this);               \
     return 0;                           \
   } while(0)
 
-#define YIELD                           \
+#define YIELD()                         \
+  CONCAT02(ENTRY, __LINE__):            \
   do {                                  \
-    return (Continuation*)this;         \
+    if (this->co.ep ==                  \
+        && CONCAT02(ENTRY, __LINE__))   \
+    {                                   \
+      this->co.ep = 0;                  \
+    }                                   \
+    else                                \
+    {                                   \
+      this->co.ep =                     \
+        && CONCAT02(ENTRY, __LINE__);   \
+      return (Continuation*)this;       \
+    }                                   \
   } while (0)
 
-
 #define CALL_FUNK(name,...)             \
-  CONCAT02(ENTRY, __LINE__):            \
-  if ((this->co.sub =                   \
-    name(this->co.sub, __VA_ARGS__)))   \
-  {                                     \
-    this->co.ep =                       \
-    && CONCAT02(ENTRY, __LINE__);       \
-    return (Continuation*)this;         \
-  }
+    (this->co.sub =                     \
+    name(this->co.sub, __VA_ARGS__))    \
 
 #define VAR_BEGIN                       \
-  struct _func_data                     \
-  {                                     \
+  struct _func_data {                   \
     Continuation co;
 
 #define VAR_END                         \
   }* this = (struct _func_data *) co;   \
-                                        \
-  if (this)                             \
-  {                                     \
-    goto *this->co.ep;                  \
-  }                                     \
+  if (this) goto *this->co.ep;          \
   if ((this = malloc(sizeof(*this))))   \
-  {                                     \
-    memset(this, 0, sizeof(*this));     \
-  }
+    memset(this, 0, sizeof(*this));
 
-
-#define INIT_END                        \
-  __INIT_END__:                         \
-  if (this->co.ep == 0)                 \
-  {                                     \
-    this->co.ep = && __INIT_END__;      \
-  }
-
-typedef struct Continuation
-{
+typedef struct Continuation {
   void* ep;                   /** entry point **/
-  struct Continuation* sub;
+  struct Continuation* sub;   /** sub func **/
 } Continuation;
-
-/*
- * The following commented code
- * are examples without FUNK macro
- */
-
-#if 0
-Continuation* _add(Continuation* co, int * ret, int a, int b)
-{
-  struct _func_data
-  {
-    Continuation co;
-
-
-    struct timespec start;
-    struct timespec now;
-
-
-  }* this = (struct _func_data *) co;
-
-  if (this)
-  {
-    goto *this->co.ep;
-  }
-  if ((this = malloc(sizeof(*this))))
-  {
-    memset(this, 0, sizeof(*this));
-  }
-
-  if (this == 0)
-  {
-    *ret = -1;
-    EXIT;
-  }
-
-  // put first time init code here
-  clock_gettime(CLOCK_REALTIME_COARSE, &this->start);
-
-  __INIT_END__: if (this->co.ep == 0)
-  {
-    this->co.ep = && __INIT_END__;
-  }
-
-  clock_gettime(CLOCK_REALTIME, &this->now);
-
-  if ((this->now.tv_sec - this->start.tv_sec) > 1)
-  {
-    *ret = a + b;
-    // put clean up code here if needed
-
-    free(this);
-    return 0;
-  }
-
-  return (Continuation*)this;
-}
-
-Continuation * _sum(Continuation * co, int a, int b, int c, int * ret)
-{
-  struct _func_data
-  {
-    Continuation co;
-
-    int sum;
-
-  }* this = (struct _func_data *) co;
-
-  if (this)
-  {
-    goto *this->co.ep;
-  }
-  if ((this = malloc(sizeof(*this))))
-  {
-    memset(this, 0, sizeof(*this));
-  }
-
-  if (this == 0)
-  {
-    *ret = -1;
-    EXIT;
-  }
-
-  __INIT_END__: if (this->co.ep == 0)
-  {
-    this->co.ep = && __INIT_END__;
-  }
-
-  ENTRY1: if ((this->co.sub = add(this->co.sub, a, b, &this->sum)))
-  {
-    this->co.ep = &&ENTRY1;
-    return (Continuation*) this;
-  }
-
-  ENTRY2: if ((this->co.sub = add(this->co.sub, this->sum, c, ret)))
-  {
-    this->co.ep = &&ENTRY2;
-    return (Continuation*) this;
-  }
-
-  free(this);
-  return 0;
-}
-
-#endif
 
 #endif
 
