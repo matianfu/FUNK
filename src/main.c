@@ -17,21 +17,15 @@ Continuation* add(Continuation* co,
   VAR_BEGIN
   struct timespec start;
   VAR_END
-
   if (!this) { *ret = -1; EXIT(); }
-
   clock_gettime(CLOCK_REALTIME, &this->start);
-
   while(1)
   {
     clock_gettime(CLOCK_REALTIME, &now);
     if ((now.tv_sec - this->start.tv_sec) > 1)
-    {
       break;
-    }
     YIELD();
   }
-
   *ret = a + b;
   EXIT();
 }
@@ -47,13 +41,15 @@ Continuation * sum(Continuation * co,
   if (!this) { *ret = -1; EXIT(); }
   this->sub = 0;
 
-  while(CALL_FUNK(this->sub, add, a, b, &this->sum)) YIELD();
+  while(CALL_FUNK(this->sub, add, a, b,
+      &this->sum)) YIELD();
   if (this->sum == -1) { // mem fail
     *ret = -1;
     EXIT();
   }
 
-  while(CALL_FUNK(this->sub, add, this->sum, c, ret)) YIELD();
+  while(CALL_FUNK(this->sub, add,
+      this->sum, c, ret)) YIELD();
   EXIT();
 }
 
