@@ -20,7 +20,7 @@ Continuation* add(Continuation* co,
   VAR_END
 
   if (!this || a < 0 || b < 0) { *ret = -1; EXIT(); }
-  if (KILL_SIGNALLED) EXIT();
+  if (KILL_SIGNALLE()) EXIT();
 
   clock_gettime(CLOCK_REALTIME, &this->start);
   while(1)
