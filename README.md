@@ -2,7 +2,7 @@
 
 A C continuation implementation inspired by Adam Dunkels' ProtoThread.
 
-Only 5 C macros and 1 struct definition; less than 50 lines of code.
+Only 7 C macros and 1 struct definition; less than 100 lines of code.
 
 Simple yet POWERFUL.
 
@@ -16,23 +16,20 @@ Continuation* add(Continuation* co,
 {
   struct timespec now;
   VAR_BEGIN
-  struct timespec start;
+    struct timespec start;
   VAR_END
 
-  if (!this) { *ret = -1; EXIT(); }
+  if (!this || a < 0 || b < 0) { *ret = -1; EXIT(); }
+  if (KILL_SIGNALLED) EXIT();
 
   clock_gettime(CLOCK_REALTIME, &this->start);
-
   while(1)
   {
     clock_gettime(CLOCK_REALTIME, &now);
     if ((now.tv_sec - this->start.tv_sec) > 1)
-    {
       break;
-    }
     YIELD();
   }
-
   *ret = a + b;
   EXIT();
 }
