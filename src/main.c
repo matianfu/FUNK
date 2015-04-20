@@ -15,9 +15,13 @@ Continuation* add(Continuation* co,
 {
   struct timespec now;
   VAR_BEGIN
-  struct timespec start;
+    struct timespec start;
   VAR_END
-  if (!this) { *ret = -1; EXIT(); }
+
+  if (this->co.ep == (void*)SIG_STOP) EXIT();
+
+  FUNK_BEGIN
+
   clock_gettime(CLOCK_REALTIME, &this->start);
   while(1)
   {
@@ -34,37 +38,62 @@ Continuation * sum(Continuation * co,
     int a, int b, int c, int * ret)
 {
   VAR_BEGIN
-  int sum;
-  Continuation* sub;
+    int sum;
+    Continuation* sub;
   VAR_END
 
-  if (!this) { *ret = -1; EXIT(); }
-  this->sub = 0;
-
-  while(CALL_FUNK(this->sub, add, a, b,
-      &this->sum)) YIELD();
-  if (this->sum == -1) { // mem fail
-    *ret = -1;
+  if ((uintptr_t)this->co.ep == SIG_STOP) {
+    STOP_FUNK(this->sub, add, 0, 0, 0);
     EXIT();
   }
 
-  while(CALL_FUNK(this->sub, add,
-      this->sum, c, ret)) YIELD();
+  this->co.funk = (FUNK)sum;
+  FUNK_ALLOC(this->sub, add, 0, 0, 0);
+
+  FUNK_BEGIN
+
+  CALL_FUNK(this->sub, add, a, b, &this->sum);
+  CALL_FUNK(this->sub, add, this->sum, c, ret);
   EXIT();
 }
 
 int main(void)
 {
-  int ret;
+  int ret = 0;
+  Continuation* st_co = 0;
+
   setbuf(stdout, NULL);
 
-  Continuation* co = 0;
-  while ((co = sum(co, 1, 2, 4, &ret)))
-  {
-    sleep(1);
-    printf("wake up\n");
-  }
-  printf("sum 1, 2, 4 is %d\n", ret);
+
+//  Continuation* co = 0;
+//  while ((co = sum(co, 1, 2, 4, &ret)))
+//  {
+//    sleep(1);
+//    printf("wake up\n");
+//  }
+//  printf("sum 1, 2, 4 is %d\n", ret);
+//
+//  ret = 0;
+//  co = 0;
+//  while ((co = sum(co, 1, 2, 4, &ret)))
+//  {
+//    sleep(1);
+//    printf("wake up\n");
+//    counter++;
+//    if (counter > 1)
+//    {
+//      STOP_FUNK(co, sum, 0, 0, 0, 0);
+//      break;
+//    }
+//  }
+
+  FUNK_ALLOC(st_co, sum, 0, 0, 0, 0);
+
+  while(sum(st_co, 1, 5, 9, &ret));
+  printf("ret is %d\n", ret);
+
+  while(sum(st_co, 2, 8, 8, &ret));
+  printf("ret is %d\n", ret);
 
   return 0;
 }
