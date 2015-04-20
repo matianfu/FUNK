@@ -57,7 +57,8 @@ Continuation * sum(Continuation * co,
     Continuation* sub;
   VAR_END
 
-  if (!this || a < 0 || b < 0 || c < 0) { *ret = -1; EXIT(); }
+  if (!this || a < 0 || b < 0 || c < 0)
+  { *ret = -1; EXIT(); }
   if (KILL_SIGNALLED()) {
     KILL_FUNC(this->sub, add, 0, 0, 0);
     EXIT();
@@ -120,7 +121,7 @@ int main(void)
       break;
     }
   }
-  printf("sum 3, 5, 7 is %d\n", ret);
+  printf("sum 1, 2, 4 is %d\n", ret);
 
   return 0;
 }
