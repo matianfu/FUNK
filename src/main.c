@@ -10,6 +10,14 @@
 #include <time.h>
 #include "funk.h"
 
+/*
+ * This function simulate adding two positive numbers
+ * and wait for 1 second before returning result.
+ *
+ * The code deals with memory failure and invalid arguments.
+ * The code responds to KILL signal.
+ * The code calls YIELD but does not call sub-FUNK
+ */
 Continuation* add(Continuation* co,
     int a, int b, int * ret)
 {
@@ -18,9 +26,8 @@ Continuation* add(Continuation* co,
     struct timespec start;
   VAR_END
 
-  if (this->co.ep == (void*)SIG_STOP) EXIT();
-
-  FUNK_BEGIN
+  if (!this || a < 0 || b < 0) { *ret = -1; EXIT(); }
+  if (KILL_SIGNALLED) EXIT();
 
   clock_gettime(CLOCK_REALTIME, &this->start);
   while(1)
@@ -34,6 +41,14 @@ Continuation* add(Continuation* co,
   EXIT();
 }
 
+/*
+ * This function simulate summing up three positive numbers
+ * using add function.
+ *
+ * The code deals with memory failure and invalid arguments.
+ * The code responds to KILL signal and kill sub-FUNK accordingly.
+ * The code calls sub-FUNK and YIELD.
+ */
 Continuation * sum(Continuation * co,
     int a, int b, int c, int * ret)
 {
@@ -42,58 +57,70 @@ Continuation * sum(Continuation * co,
     Continuation* sub;
   VAR_END
 
-  if ((uintptr_t)this->co.ep == SIG_STOP) {
-    STOP_FUNK(this->sub, add, 0, 0, 0);
+  if (!this || a < 0 || b < 0 || c < 0) { *ret = -1; EXIT(); }
+  if (KILL_SIGNALLED) {
+    KILL_FUNC(this->sub, add, 0, 0, 0);
     EXIT();
   }
 
-  this->co.funk = (FUNK)sum;
-  FUNK_ALLOC(this->sub, add, 0, 0, 0);
+  while (CALL_FUNK(this->sub, add, a, b, &this->sum))
+    YIELD();
 
-  FUNK_BEGIN
+  if (this->sum == -1) // mem fail
+  {
+    *ret = -1;
+    EXIT();
+  }
 
-  CALL_FUNK(this->sub, add, a, b, &this->sum);
-  CALL_FUNK(this->sub, add, this->sum, c, ret);
+  while (CALL_FUNK(this->sub, add, this->sum, c, ret))
+    YIELD();
+
   EXIT();
 }
 
 int main(void)
 {
-  int ret = 0;
-  Continuation* st_co = 0;
+  int ret;
+  int counter;
+  Continuation* co;
 
   setbuf(stdout, NULL);
 
 
-//  Continuation* co = 0;
-//  while ((co = sum(co, 1, 2, 4, &ret)))
-//  {
-//    sleep(1);
-//    printf("wake up\n");
-//  }
-//  printf("sum 1, 2, 4 is %d\n", ret);
-//
-//  ret = 0;
-//  co = 0;
-//  while ((co = sum(co, 1, 2, 4, &ret)))
-//  {
-//    sleep(1);
-//    printf("wake up\n");
-//    counter++;
-//    if (counter > 1)
-//    {
-//      STOP_FUNK(co, sum, 0, 0, 0, 0);
-//      break;
-//    }
-//  }
+  /* case 1: call sum FUNK
+   * notice that you can put other jobs in while-loop
+   * this is important pattern for polling event
+   */
+  ret = 0;
+  co = 0; // be sure to null the pointer before using it.
+  while (CALL_FUNK(co, sum, 1, 2, 4, &ret))
+  {
+    sleep(1);
+    printf("wake up\n");
+  }
+  printf("sum 1, 2, 4 is %d\n", ret);
 
-  FUNK_ALLOC(st_co, sum, 0, 0, 0, 0);
-
-  while(sum(st_co, 1, 5, 9, &ret));
-  printf("ret is %d\n", ret);
-
-  while(sum(st_co, 2, 8, 8, &ret));
-  printf("ret is %d\n", ret);
+  /* case 2: call sum FUNK
+   * this time we cancel the job after sleep twice
+   * this is also EXTREMELY important when high level
+   * state machine transit to new state, and you need
+   * to destroy the current one.
+   */
+  ret = 0;
+  co = 0;
+  while (CALL_FUNK(co, sum, 1, 2, 4, &ret))
+  {
+    sleep(1);
+    printf("wake up\n");
+    counter++;
+    if (counter > 1)
+    {
+      KILL_FUNC(co, sum, 0, 0, 0, 0);
+      printf("funk cancelled");
+      break;
+    }
+  }
+  printf("sum 3, 5, 7 is %d\n", ret);
 
   return 0;
 }
