@@ -28,7 +28,7 @@
 #define FUNK_STOPPED                        3 // not used yet
 #define FUNK_RESUMED                        4
 
-#define KILL_SIGNALLED                      (this->co.ep == (void*)FUNK_SIG_KILL)
+#define KILL_SIGNALLED()                    (this->co.ep == (void*)FUNK_SIG_KILL)
 
 #define EXIT()                              \
   do                                        \

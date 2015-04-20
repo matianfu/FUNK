@@ -27,7 +27,7 @@ Continuation* add(Continuation* co,
   VAR_END
 
   if (!this || a < 0 || b < 0) { *ret = -1; EXIT(); }
-  if (KILL_SIGNALLED) EXIT();
+  if (KILL_SIGNALLED()) EXIT();
 
   clock_gettime(CLOCK_REALTIME, &this->start);
   while(1)
@@ -58,7 +58,7 @@ Continuation * sum(Continuation * co,
   VAR_END
 
   if (!this || a < 0 || b < 0 || c < 0) { *ret = -1; EXIT(); }
-  if (KILL_SIGNALLED) {
+  if (KILL_SIGNALLED()) {
     KILL_FUNC(this->sub, add, 0, 0, 0);
     EXIT();
   }
